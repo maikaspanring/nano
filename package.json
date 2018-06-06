@@ -1,0 +1,20 @@
+{
+  "name": "ic2",
+  "version": "0.2.0",
+  "description": "Intelligent City 2",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "Electron",
+    "Intelligent",
+    "City",
+    "simulation"
+  ],
+  "author": "Niklas Spanring",
+  "license": "Apache License 2.0",
+  "devDependencies": {
+    "electron": "~1.6.2"
+  }
+}

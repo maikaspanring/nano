@@ -1,0 +1,56 @@
+/**
+ * Settings
+ */
+
+// DEBUG LEVELS
+const ERROR = 1
+const WARNING = 2
+const INFO = 3
+const NOTE = 4
+const DEBUG_LEVEL = ERROR // set minimal debug level
+
+// Start ID
+var world_id = 0
+// seed for random functions
+var seed = "5345345"
+
+/**
+ * Requires
+ */
+
+// Require all classes and data files
+require('./js/lib/seedrandom.min.js');
+require('./js/lib/functions.lib.js')(); // the "()" activates the functions in the library and puts them into the global functions
+const syllables = require('./data/syllables.json')
+
+// Third Party
+
+const { Entity } = require('./js/class/entity.class.js');
+const { NanoManager } = require('./js/class/nanoManager.class.js');
+
+/**
+ * View
+ */
+
+// Fires when document is loaded
+$( document ).ready(function() {
+  Crafty.init(window.innerWidth,window.innerHeight , document.getElementById('game'));
+  Crafty.viewport.clampToEntities = false;
+  Crafty.viewport.scale(0.8)
+  Crafty.viewport.mouselook(1);
+  Crafty.bind("MouseWheelScroll", function(evt) {
+    Crafty.viewport.scale(Crafty.viewport._scale * (1 + evt.direction * 0.1));
+  });
+  Crafty.e('2D, Canvas, Color').attr({x: 0, y: 0, w: window.innerWidth, h: window.innerHeight}).color('#AAA');
+
+  log(NOTE, "--- START ---")
+  log(NOTE, "Node: "+process.versions.node )
+  log(NOTE, "Chrome: "+process.versions.chrome )
+  log(NOTE, "Electron: "+process.versions.electron )
+
+  Math.random = new Math.seedrandom(seed) // start random seed Math.random()
+
+  Nano = new NanoManager();
+  for (i = 0; i < 10; i++) Nano.add("red");
+  for (i = 0; i < 10; i++) Nano.add("green");
+})
