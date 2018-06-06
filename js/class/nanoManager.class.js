@@ -45,6 +45,8 @@ class NanoManager extends Entity{
 						this.data = [];
 
 						this.data["hangar"] = [];
+						this.next_hangar_dist = 0;
+						this.next_hangar;
 
 						this.data["touched"] = [];
 						this.data["population"] = [];
@@ -95,8 +97,17 @@ class NanoManager extends Entity{
 					//Crafty.log(eventData);
 
 					var speed = 10;
-					if(this.energy){
+					if(this.energy){ // a + b / 2
 						if(eventData.gameTime > this.wait_time){
+
+							if(this.next_hangar !== undefined)
+							if(this.energy - ((this.w + this.h) / 2) <= this.next_hangar_dist){
+								this.place_queue_x = this.next_hangar.x;
+								this.place_queue_y = this.next_hangar.y;
+							}else if(this.place_queue_x == this.next_hangar.x && this.place_queue_y == this.next_hangar.y){
+								this.place_queue_x=0;
+								this.place_queue_y=0;
+							}
 
 							if(this.place_queue_x == 0) this.place_queue_x =  window.innerWidth - (Math.floor(Math.random() * window.innerWidth) );
 							if(this.place_queue_y == 0) this.place_queue_y =  window.innerHeight - (Math.floor(Math.random() * window.innerHeight) );
@@ -116,6 +127,17 @@ class NanoManager extends Entity{
 							if(this.x == this.place_queue_x && this.y == this.place_queue_y){
 								this.place_queue_x=0;
 								this.place_queue_y=0;
+
+
+								for (var i = 0; i < this.data["hangar"].length; i++) {
+									if(this.data["hangar"][i] !== undefined){
+										var ndist = (this.data["hangar"][i].obj.x + this.data["hangar"][i].obj.y) / 2
+										if(this.next_hangar_dist == 0 || this.next_hangar_dist > ndist){
+											this.next_hangar_dist = ndist;
+											this.next_hangar = this.data["hangar"][i].obj;
+										}
+									}
+								}
 							}
 
 							this.energy--;
@@ -175,7 +197,9 @@ class NanoManager extends Entity{
 
 				// recived a ping
 				ping: function(from){
-
+					for (var i = 0; i < from.length; i++) {
+						from[i].obj.energy=1000;
+					}
 
 				},
 				// try to connect "to"
