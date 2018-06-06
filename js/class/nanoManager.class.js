@@ -56,6 +56,7 @@ class NanoManager extends Entity{
 							this.data["population"]["names"][from[i].obj[0]] = from[i].obj[0];
 							this.data["population"]["count"] = this.data["population"]["names"].length;
 							this.data["population"]["timestamp"] = +new Date;
+							
 							//Crafty.log(this[0], from[i].obj[0], this.data["touched"]);
 							//Crafty.log(this[0], from[i].obj[0], this.data["population"]["names"]);
 						}
