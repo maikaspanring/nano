@@ -51,6 +51,7 @@ $( document ).ready(function() {
   Math.random = new Math.seedrandom(seed) // start random seed Math.random()
 
   Nano = new NanoManager();
-  for (i = 0; i < 10; i++) Nano.add("red");
-  for (i = 0; i < 10; i++) Nano.add("green");
+  Nano.addNanobotHangar("red");
+  for (i = 0; i < 10; i++) Nano.addNanobot("red");
+  //for (i = 0; i < 10; i++) Nano.add("green");
 })
