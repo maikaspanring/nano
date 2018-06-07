@@ -25,8 +25,8 @@ const syllables = require('./data/syllables.json')
 
 // Third Party
 
-const { Entity } = require('./js/class/entity.class.js');
 const { NanoManager } = require('./js/class/nanoManager.class.js');
+const { ResourcesManager } = require('./js/class/resourcesManager.class.js');
 
 /**
  * View
@@ -50,7 +50,12 @@ $( document ).ready(function() {
 
   Math.random = new Math.seedrandom(seed) // start random seed Math.random()
 
+  Resources = new ResourcesManager();
   Nano = new NanoManager();
+
+  Resources.addResources();
+
+  Nano.addNanobotHangar("red");
   Nano.addNanobotHangar("red");
   for (i = 0; i < 10; i++) Nano.addNanobot("red");
   //for (i = 0; i < 10; i++) Nano.add("green");

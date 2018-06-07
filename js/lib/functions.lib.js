@@ -1,4 +1,22 @@
 module.exports = function() {
+
+  this.merge = function(i,x) {
+   h = {}
+   n = []
+   for (a = 2; a--; i=x)
+      i.map(function(b){
+        h[b] = h[b] || n.push(b)
+      })
+   return n
+  }
+
+  this.extend = function(obj, src) {
+    for (var key in src) {
+        if (src.hasOwnProperty(key)) obj[key] = src[key];
+    }
+    return obj;
+  }
+
   /**
    * Make a Number from the probabilities
    * @param probabilities [2.2, 40, 70]

@@ -1,8 +1,6 @@
-class NanoManager extends Entity{
-	constructor(grid_x = 0, grid_y = 0){
-		super() // call constructor of Entity
-
-		this.queue = [];
+class NanoManager{
+	constructor(){
+		this.nanobots = [];
 
 		// init component
 		this.initNanobotHangar();
@@ -11,7 +9,7 @@ class NanoManager extends Entity{
 
 	addNanobotHangar(group){
 		var sq1 = Crafty.e("NanobotHangar")
-				.place(150,150)
+				.place(window.innerWidth - (Math.floor(Math.random() * window.innerWidth)), window.innerHeight - (Math.floor(Math.random() * window.innerHeight)))
 				.color("yellow")
 		    .setgroup(group)
 	}
@@ -20,6 +18,8 @@ class NanoManager extends Entity{
 		var sq1 = Crafty.e("Nanobot")
 		    .setgroup(group)
 				.place(window.innerWidth - (Math.floor(Math.random() * window.innerWidth)), window.innerHeight - (Math.floor(Math.random() * window.innerHeight)))
+
+		this.nanobots[sq1[0]] = sq1;
 		//if(follow) Crafty.viewport.follow(sq1, 0, 0);
 	}
 
@@ -29,29 +29,50 @@ class NanoManager extends Entity{
 		    // So it sets up the things that both our entities had in common
 		    init: function() {
 		        this.addComponent("2D, Canvas, Color, Collision, Solid");
+						this.id = this[0];
+						Crafty.log(this.id, "Nanobot created");
+
+						var energy_visio = Crafty.e("2D, Canvas, Color")
+						                     .attr({x: 0, y: 15, w: 0, h: -15})
+						                     .color("green");
+						this.attach(energy_visio);
+						this.energy_visio = energy_visio;
+
+						this.attach(Crafty.e("2D, Canvas, Text").text(this.id).textFont({ size: '20px'}));
+
 		        this.w = 30;
 		        this.h = 30;
 						this.place_queue_x = 0;
 						this.place_queue_y = 0;
 						this.checkHits('Solid');
 
+						this.max_w = 1000;
+						this.max_h = 1000;
+
+						//this.text(function () { return this[0] });
 						this.typ = "bot";
 						this.group = "red";
 
+						this.speed = 10;
 						this.wait_time = 0;
 
-						this.energy = 1000;
+						// energy = steps
+						this.energy_max = 5000;
+						this.energy = 5000;
 
+						this.gameTime;
 						this.data = [];
 
 						this.data["hangar"] = [];
 						this.next_hangar_dist = 0;
 						this.next_hangar;
+						this.returns_to_hangar = 0;
+						this.steps_from_hangar = 0;
 
 						this.data["touched"] = [];
 						this.data["population"] = [];
 						this.data["population"]["names"] = [];
-						this.data["population"]["names"][this[0]] = this[0];
+						this.data["population"]["names"][this.id] = this.id;
 						this.data["population"]["count"] = 1;
 						this.data["population"]["timestamp"] = +new Date;
 		    },
@@ -69,50 +90,100 @@ class NanoManager extends Entity{
 						if(from[i].obj.group == this.group){
 							this.color("white")
 
-							this.data["touched"][from[i].obj[0]] = from[i].obj[0];
+							this.dataExchange(from[i]);
 
-							if(from[i].obj.typ == "bot"){
-								this.data["hangar"].concat(from[i].obj.data["hangar"]);
-								this.data["population"]["names"].concat(from[i].obj.data["population"]["names"]);
-								this.data["population"]["names"][from[i].obj[0]] = from[i].obj[0];
-								this.data["population"]["count"] = this.data["population"]["names"].length;
-								this.data["population"]["timestamp"] = +new Date;
-							}else if(from[i].obj.typ == "hangar"){
-								this.data["hangar"][from[i].obj[0]] = from[i];
-							}
-
-							this.wait_time = +new Date + 500;
+							this.wait_time = this.gameTime + (50 * this.speed);
 							//Crafty.log(this[0], from[i].obj[0], this.data["touched"]);
-							Crafty.log(this.data["hangar"]);
+						}else{
+							this.dataExchange(from[i], false);
 						}
 					}
 				},
 				// try to connect "to"
 				lost: function(from){
 					this.color(this.group)
+					if(this.returns_to_hangar == 1) this.color("yellow");
+				},
+
+				dataExchange: function(from, from_group = true){
+					if(from_group){
+						if(from.obj.typ == "bot"){
+							this.data["touched"][from.obj.id] = from.obj.id;
+
+						// TRANSFER HANGAR DATA
+							this.data["hangar"] = extend(this.data["hangar"], from.obj.data["hangar"]);
+							from.obj.data["hangar"] = this.data["hangar"];
+						// TRANSFER population DATA
+							this.data["population"]["names"].concat(from.obj.data["population"]["names"]);
+							this.data["population"]["names"][from.obj.id] = from.obj.id;
+							this.data["population"]["count"] = this.data["population"]["names"].length;
+							this.data["population"]["timestamp"] = this.gameTime;
+
+						// TRANSFER ENERGY
+							if(from.obj.energy < (this.energy / 3)){
+								if((this.energy / 3) - ((this.w + this.h) / 2) >= this.next_hangar_dist ){
+									from.obj.energy+= (this.energy / 3);
+									this.energy-= (this.energy / 3);
+								}
+							}
+
+							this.getNextHangar();
+						}else if(from.obj.typ == "hangar"){
+							this.data["hangar"][from.obj.id] = from;
+							this.getNextHangar();
+						}
+					}else{
+						if(from.obj.typ == "power"){
+							Crafty.log(this.id, "found power");
+						}
+					}
 				},
 
 				// do something every frame
 				action: function(eventData){
 					//Crafty.log(eventData);
-
-					var speed = 10;
-					if(this.energy){ // a + b / 2
+					if(this.energy > 0){
 						if(eventData.gameTime > this.wait_time){
+							this.gameTime = eventData.gameTime;
 
-							if(this.next_hangar !== undefined)
-							if(this.energy - ((this.w + this.h) / 2) <= this.next_hangar_dist){
-								this.place_queue_x = this.next_hangar.x;
-								this.place_queue_y = this.next_hangar.y;
-							}else if(this.place_queue_x == this.next_hangar.x && this.place_queue_y == this.next_hangar.y){
-								this.place_queue_x=0;
-								this.place_queue_y=0;
+							this.color(this.group)
+							if(this.returns_to_hangar == 1) this.color("yellow");
+
+						// CALC MISSION ABORT OR LOADING HANGAR
+							if(this.next_hangar !== undefined){
+								if(this.energy <= this.steps_from_hangar){  // mission aborted
+									this.place_queue_x = this.next_hangar.x;
+									this.place_queue_y = this.next_hangar.y;
+									this.returns_to_hangar = 1;
+								}
+								if(this.x == this.next_hangar.x && this.y == this.next_hangar.y){
+									this.place_queue_x=0;
+									this.place_queue_y=0;
+									this.returns_to_hangar = 0;
+									this.steps_from_hangar = 0;
+								}
 							}
 
-							if(this.place_queue_x == 0) this.place_queue_x =  window.innerWidth - (Math.floor(Math.random() * window.innerWidth) );
-							if(this.place_queue_y == 0) this.place_queue_y =  window.innerHeight - (Math.floor(Math.random() * window.innerHeight) );
-							var move_x = (eventData.dt / speed);
-							var move_y = (eventData.dt / speed);
+						// CALC NEW PLACE
+							if(this.place_queue_x == 0 && this.place_queue_y == 0){
+								this.place_queue_x =  -this.max_w + (Math.floor(Math.random() * (this.max_w * 2)) );
+								this.place_queue_y =  -this.max_h + (Math.floor(Math.random() * (this.max_h * 2)) );
+								this.color(this.group)
+								this.returns_to_hangar = 0;
+
+								if(this.next_hangar !== undefined){ // test if mission is do able
+									this.next_hangar_dist = this.getDistance(this.next_hangar.x, this.next_hangar.y, this.place_queue_x, this.place_queue_y )
+									if(this.energy - (this.next_hangar_dist) <= this.next_hangar_dist){ // mission denied
+										this.place_queue_x = this.next_hangar.x;
+										this.place_queue_y = this.next_hangar.y;
+										this.returns_to_hangar = 1;
+									}
+								}
+							}
+
+						// CALC MOVE
+							var move_x = (eventData.dt / this.speed);
+							var move_y = (eventData.dt / this.speed);
 
 							if(this.x < this.place_queue_x && this.x + move_x > this.place_queue_x) move_x = this.place_queue_x - this.x;
 							if(this.x > this.place_queue_x && this.x - move_x < this.place_queue_x) move_x = this.x - this.place_queue_x;
@@ -124,53 +195,67 @@ class NanoManager extends Entity{
 							if(this.y < this.place_queue_y) this.y = this.y + move_y;
 							if(this.y > this.place_queue_y) this.y = this.y - move_y;
 
+						// ARIVED AT PLACE
 							if(this.x == this.place_queue_x && this.y == this.place_queue_y){
 								this.place_queue_x=0;
 								this.place_queue_y=0;
-
-
-								for (var i = 0; i < this.data["hangar"].length; i++) {
-									if(this.data["hangar"][i] !== undefined){
-										var ndist = (this.data["hangar"][i].obj.x + this.data["hangar"][i].obj.y) / 2
-										if(this.next_hangar_dist == 0 || this.next_hangar_dist > ndist){
-											this.next_hangar_dist = ndist;
-											this.next_hangar = this.data["hangar"][i].obj;
-										}
-									}
-								}
+								this.getNextHangar();
 							}
 
-							this.energy--;
+						// CALC ENERGY
+							this.energy-= (move_x + move_y);
+							this.steps_from_hangar+= (move_x + move_y);
+
 						}
+					}else{ // NANOBOT HAVE NO POWER
+						this.color("grey");
 					}
+
+					// Update energy_visio
+					var percent = this.energy * 100 / this.energy_max;
+					var nwidth = percent*this.w / 100;
+					this.energy_visio.w = nwidth;
 				},
 
-		    // This function will be called when the component is removed from an entity
-		    // or right before entity is destroyed.
-		    // Useful for doing custom cleanup.
 		    remove: function() {
-		        // This function serves for logging.
-		        // Once your game is release ready you can disable logging
-		        // by setting Crafty.loggingEnabled to false
 		        Crafty.log('Square was removed!');
 		    },
 
 				setgroup: function(group){
 					this.group = group;
 					this.color(group);
-
 					return this;
 				},
-		    // Our two entities had different positions,
-		    // so we define a method for setting the position
+
 		    place: function(x, y) {
 		        this.x = x;
 		        this.y = y;
-
-		        // There's no magic to method chaining.
-		        // To allow it, we have to return the entity!
 		        return this;
-		    }
+		    },
+
+				getNextHangar: function(){
+					this.next_hangar_dist = 0;
+					for (var i = 0; i < this.data["hangar"].length; i++) {
+						if(this.data["hangar"][i] !== undefined){
+							var ndist = this.getDistance(this.data["hangar"][i].obj.x, this.data["hangar"][i].obj.y)
+							if(this.next_hangar_dist == 0 || this.next_hangar_dist > ndist){
+								this.next_hangar_dist = ndist;
+								this.next_hangar = this.data["hangar"][i].obj;
+							}
+						}
+					}
+				},
+
+				getDistance: function(x, y, x2 = 0, y2 = 0){
+					if( x2 == 0 && y2 == 0){
+						var a = this.x - x;
+						var b = this.y - y;
+					}else{
+						var a = x2 - x;
+						var b = y2 - y;
+					}
+					return Math.abs( a + b );
+				}
 		})
 	}
 
@@ -180,6 +265,7 @@ class NanoManager extends Entity{
 		    // So it sets up the things that both our entities had in common
 		    init: function() {
 		        this.addComponent("2D, Canvas, Color, Collision, Solid");
+						this.id = this[0];
 		        this.w = 60;
 		        this.h = 60;
 						this.place_queue_x = 0;
@@ -198,7 +284,9 @@ class NanoManager extends Entity{
 				// recived a ping
 				ping: function(from){
 					for (var i = 0; i < from.length; i++) {
-						from[i].obj.energy=1000;
+						//Crafty.log("Hangar[",this.id,"] -> (",from[i].obj.energy_max,") -> Nanobot[",from[i].obj.id,"]");
+						from[i].obj.energy=from[i].obj.energy_max;
+						this.resetHitChecks('Solid');
 					}
 
 				},
