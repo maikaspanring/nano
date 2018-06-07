@@ -4,7 +4,7 @@ class ResourcesManager{
     this.initResources();
   }
 
-  addResources(typ="power"){
+  addResources(typ="fuel"){
     var sq1 = Crafty.e("Resources")
         .place(-1000 + (Math.floor(Math.random() * (1000*2))), -1000 + (Math.floor(Math.random() * (1000*2))))
         .typ(typ)
