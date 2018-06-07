@@ -222,6 +222,7 @@ class NanoManager{
 										this.place_queue_x = this.next_hangar.x;
 										this.place_queue_y = this.next_hangar.y;
 										this.returns_to_hangar = 1;
+										this.work_queue = "idle";
 									}
 								}
 							}
@@ -244,6 +245,7 @@ class NanoManager{
 							if(this.x == this.place_queue_x && this.y == this.place_queue_y){
 								this.place_queue_x=0;
 								this.place_queue_y=0;
+								//this.work_queue = "idle";
 								this.getNextHangar();
 							}
 
@@ -398,8 +400,8 @@ class NanoManager{
 					//Crafty.log(eventData);
 					if(this.storage > 0)
 					{
-						this.storage-= 10;
-						this.energy+=40;
+						this.storage-= 1;
+						this.energy+=1000;
 						var percent = this.setVisio();
 					}
 				},
