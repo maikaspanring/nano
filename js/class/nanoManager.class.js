@@ -53,7 +53,7 @@ class NanoManager{
 						this.typ = "bot";
 						this.group = "red";
 
-						this.speed = 10;
+						this.speed = 0.5;
 						this.wait_time = 0;
 
 						// energy = steps
@@ -151,7 +151,7 @@ class NanoManager{
 
 						// CALC MISSION ABORT OR LOADING HANGAR
 							if(this.next_hangar !== undefined){
-								if(this.energy <= this.steps_from_hangar){  // mission aborted
+								if(this.energy - 100 <= this.steps_from_hangar){  // mission aborted
 									this.place_queue_x = this.next_hangar.x;
 									this.place_queue_y = this.next_hangar.y;
 									this.returns_to_hangar = 1;
@@ -266,14 +266,24 @@ class NanoManager{
 		    init: function() {
 		        this.addComponent("2D, Canvas, Color, Collision, Solid");
 						this.id = this[0];
-		        this.w = 60;
-		        this.h = 60;
-						this.place_queue_x = 0;
-						this.place_queue_y = 0;
+		        this.w = 100;
+		        this.h = 100;
 						this.checkHits('Solid');
 
 						this.typ = "hangar";
 						this.group = "red";
+
+						this.energy_max = 10000000; // 10 000 000
+						this.energy = 10000000; // 10 000 000
+
+						this.energy_visio_text = Crafty.e("2D, Canvas, Text").text(this.energy).textFont({ size: '18px'});
+						this.attach(this.energy_visio_text);
+
+						var energy_visio = Crafty.e("2D, Canvas, Color")
+						                     .attr({x: 0, y: 60, w: 0, h: -20})
+						                     .color("green");
+						this.attach(energy_visio);
+						this.energy_visio = energy_visio;
 		    },
 				events: {
 					"UpdateFrame": "action",
@@ -285,7 +295,20 @@ class NanoManager{
 				ping: function(from){
 					for (var i = 0; i < from.length; i++) {
 						//Crafty.log("Hangar[",this.id,"] -> (",from[i].obj.energy_max,") -> Nanobot[",from[i].obj.id,"]");
-						from[i].obj.energy=from[i].obj.energy_max;
+						var needed_energy = from[i].obj.energy_max - from[i].obj.energy;
+						if(this.energy - needed_energy >= 0){
+							from[i].obj.energy+=needed_energy;
+							this.energy-= needed_energy;
+
+						}else if(this.energy > 0){ // give last bit of energy
+							from[i].obj.energy+=this.energy;
+							this.energy-= this.energy;
+						}
+						this.energy_visio_text.text(Math.round(this.energy));
+
+						var percent = this.energy * 100 / this.energy_max;
+						var nwidth = percent*this.w / 100;
+						this.energy_visio.w = nwidth;
 						this.resetHitChecks('Solid');
 					}
 
