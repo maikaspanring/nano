@@ -57,7 +57,7 @@ $( document ).ready(function() {
   Resources.addResources("carbon"); // to make nanotubes
 
   //Nano.addNanobotHangar("red");
-  Nano.addNanobotHangar("red");
-  for (i = 0; i < 25; i++) Nano.addNanobot("red");
+  Nano.addNanobotHangar(1);
+  for (i = 0; i < 25; i++) Nano.addNanobot(1);
   //for (i = 0; i < 10; i++) Nano.add("green");
 })

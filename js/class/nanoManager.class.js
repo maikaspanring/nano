@@ -7,17 +7,17 @@ class NanoManager{
 		this.initNanobot();
 	}
 
-	addNanobotHangar(group){
+	addNanobotHangar(team){
 		var sq1 = Crafty.e("NanobotHangar")
 				.place(window.innerWidth - (Math.floor(Math.random() * window.innerWidth)), window.innerHeight - (Math.floor(Math.random() * window.innerHeight)))
 				.color("yellow")
 				.origin("center")
-		    .setgroup(group)
+		    .setTeam(team)
 	}
 
-	addNanobot(group){
+	addNanobot(team){
 		var sq1 = Crafty.e("Nanobot")
-		    .setgroup(group)
+		    .setTeam(team)
 				.place(window.innerWidth - (Math.floor(Math.random() * window.innerWidth)), window.innerHeight - (Math.floor(Math.random() * window.innerHeight)))
 				.origin("center")
 		this.nanobots[sq1[0]] = sq1;
@@ -31,7 +31,6 @@ class NanoManager{
 		    init: function() {
 		        this.addComponent("2D, Canvas, Color, Collision, Solid");
 						this.id = this[0];
-						Crafty.log(this.id, "Nanobot created");
 
 						var energy_visio = Crafty.e("2D, Canvas, Color")
 						                     .attr({x: 0, y: 15, w: 0, h: -15})
@@ -50,15 +49,15 @@ class NanoManager{
 						this.next_job_dist = 0;
 						this.checkHits('Solid');
 
-						this.max_w = 1000;
-						this.max_h = 1000;
+						this.max_w = 5000;
+						this.max_h = 5000;
 
 						//this.text(function () { return this[0] });
 						this.typ = "bot";
 						this.task = this.calcTask(); // calc the life task of this bot
-						this.group = "red";
+						this.team = 1;
 
-						this.speed = 0.5;
+						this.speed = 1;
 						this.wait_time = 0;
 
 						// energy = steps = fuel
@@ -88,6 +87,12 @@ class NanoManager{
 						this.data["population"]["names"][this.id] = this.id;
 						this.data["population"]["count"] = 1;
 						this.data["population"]["timestamp"] = +new Date;
+
+						// visio
+						this.flash = 0;
+
+						this.calcGroup();
+						Crafty.log(this.id, "Nanobot created task:", this.task);
 		    },
 
 				calcTask: function(){
@@ -98,8 +103,8 @@ class NanoManager{
 					return task_arr[getNumber(
 			      [
 			        //chance, min, max
-			        [.25 ,1 ,1],   // 1: scout 50%
-			        [.50 ,2 ,2],   // 2: fuel 50%
+			        [.50 ,1 ,1],   // 1: scout 50%
+			        [.25 ,2 ,2],   // 2: fuel 50%
 							[.25 ,3 ,3],   // 2: carbon 50%
 			      ]
 			    )];
@@ -116,7 +121,7 @@ class NanoManager{
 
 					// ID from the next nano: from[0].obj[0]]
 					for (var i = from.length - 1; i >= 0; i--) {
-						if(from[i].obj.group == this.group){
+						if(from[i].obj.team == this.team){
 							this.color("white")
 
 							this.dataExchange(from[i]);
@@ -155,8 +160,10 @@ class NanoManager{
 						// TRANSFER ENERGY
 							if(from.obj.energy < (this.energy / 3)){
 								if((this.energy / 3) - ((this.w + this.h) / 2) >= this.next_hangar_dist ){
-									from.obj.energy+= (this.energy / 3);
-									this.energy-= (this.energy / 3);
+									var givable_engery = (this.energy / 3)
+									if((from.obj.energy_max - from.obj.energy) < (this.energy / 3 ) ) givable_engery = (from.obj.energy_max - from.obj.energy);
+									from.obj.energy+= givable_engery;
+									this.energy-= givable_engery;
 								}
 							}
 
@@ -174,7 +181,7 @@ class NanoManager{
 								if(this.storage < this.storage_max){ // is ther still storage aviable
 									this.storage+=10;
 									this.wait_time = this.gameTime + (500 * this.speed);
-									Crafty.log(this.id, " getherd", this.storage);
+									//Crafty.log(this.id, " getherd", this.storage);
 									this.resetHitChecks('Solid'); // geather more
 								}
 							}
@@ -185,6 +192,9 @@ class NanoManager{
 				// do something every frame
 				action: function(eventData){
 					//Crafty.log(eventData);
+					this.flash++;
+					if(this.flash > 25) this.flash = -25;
+
 					if(this.energy > 0){
 						if(eventData.gameTime > this.wait_time){
 							this.gameTime = eventData.gameTime;
@@ -282,7 +292,8 @@ class NanoManager{
 
 						}
 					}else{ // NANOBOT HAVE NO fuel
-						this.color("grey");
+						if(this.flash > 0)	this.color("grey");
+						else this.color(this.group);
 					}
 
 					// Update energy_visio
@@ -295,12 +306,27 @@ class NanoManager{
 		        Crafty.log('Square was removed!');
 		    },
 
-				setgroup: function(group){
+				setTeam: function(team){
+					this.team = team;
+					return this;
+				},
+				setGroup: function(group){
 					this.group = group;
 					this.color(group);
 					return this;
 				},
-
+				calcGroup: function(){
+					switch(this.task){
+						case "fuel": this.group = "red"; break;
+						case "scout":
+							this.group = "darkgreen";
+							this.energy_max = this.energy_max * 10;
+							this.speed = 0.5;
+							break;
+						case "carbon": this.group = "lightblue"; break;
+						default: this.group = "silver"; break;
+					}
+				},
 		    place: function(x, y) {
 		        this.x = x;
 		        this.y = y;
@@ -355,6 +381,7 @@ class NanoManager{
 						this.checkHits('Solid');
 
 						this.typ = "hangar";
+						this.team = 1;
 						this.group = "red";
 
 						this.energy_max = 1000000; // 10 000 000
@@ -365,14 +392,15 @@ class NanoManager{
 						this.storage_max = 1000;
 						this.storage = 0;
 
+						var energy_visio = Crafty.e("2D, Canvas, Color")
+					                     .attr({x: 0, y: 20, w: 0, h: 20})
+					                     .color("green");
+						this.attach(energy_visio);
+						this.energy_visio = energy_visio;
+
 						this.energy_visio_text = Crafty.e("2D, Canvas, Text").text(this.energy).textFont({ size: '18px'});
 						this.attach(this.energy_visio_text);
 
-						var energy_visio = Crafty.e("2D, Canvas, Color")
-						                     .attr({x: -10, y: 60, w: 0, h: -20, z: 10})
-						                     .color("green");
-						this.attach(energy_visio);
-						this.energy_visio = energy_visio;
 		    },
 				events: {
 					"UpdateFrame": "action",
@@ -401,7 +429,9 @@ class NanoManager{
 
 						var percent = this.setVisio();
 
-						if(percent < 50) from[i].obj.work_queue = "fuel";
+						if(percent < 50 && from[i].obj.task == "fuel"){
+							from[i].obj.work_queue = "fuel";
+						}
 
 						// set next hit
 						this.resetHitChecks('Solid');
@@ -419,6 +449,7 @@ class NanoManager{
 					var percent = this.energy * 100 / this.energy_max;
 					var nwidth = percent*this.w / 100;
 					this.energy_visio.w = nwidth;
+					//Crafty.log(this.energy_visio);
 					return percent;
 				},
 				// do something every frame
@@ -441,7 +472,10 @@ class NanoManager{
 		        // by setting Crafty.loggingEnabled to false
 		        Crafty.log('Square was removed!');
 		    },
-
+				setTeam: function(team){
+					this.team = team;
+					return this;
+				},
 				setgroup: function(group){
 					this.group = group;
 
