@@ -60,8 +60,8 @@ class NanoManager{
 						this.wait_time = 0;
 
 						// energy = steps = fuel
-						this.energy_max = 5000;
-						this.energy = 5000;
+						this.energy_max = 8000;
+						this.energy = 8000;
 
 						// A nanobot can carry/store the 4 x of its energy
 						this.storage_typ = "";
@@ -145,6 +145,7 @@ class NanoManager{
 							this.getNextHangar();
 						}else if(from.obj.typ == "hangar"){
 							this.data["hangar"][from.obj.id] = from;
+							this.next_job = "idle";
 							this.getNextHangar();
 						}
 					}else{
@@ -244,6 +245,7 @@ class NanoManager{
 							if(this.x == this.place_queue_x && this.y == this.place_queue_y){
 								this.place_queue_x=0;
 								this.place_queue_y=0;
+								this.next_job = "idle";
 								this.getNextHangar();
 							}
 
@@ -399,7 +401,7 @@ class NanoManager{
 					if(this.storage > 0)
 					{
 						this.storage-= 10;
-						this.energy+=40;
+						this.energy+=1000;
 						var percent = this.setVisio();
 					}
 				},

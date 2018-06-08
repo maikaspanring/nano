@@ -56,7 +56,7 @@ $( document ).ready(function() {
   Resources.addResources();
 
   Nano.addNanobotHangar("red");
-  Nano.addNanobotHangar("red");
-  for (i = 0; i < 10; i++) Nano.addNanobot("red");
+  //Nano.addNanobotHangar("red");
+  for (i = 0; i < 100; i++) Nano.addNanobot("red");
   //for (i = 0; i < 10; i++) Nano.add("green");
 })
