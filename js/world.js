@@ -52,7 +52,7 @@ $( document ).ready(function() {
 
   Resources = new ResourcesManager();
   Nano = new NanoManager();
-
+  poli = new Crafty.polygon([50, 0, 100, 100, 0, 100]);
   Resources.addResources("fuel");
   Resources.addResources("carbon"); // to make nanotubes
 

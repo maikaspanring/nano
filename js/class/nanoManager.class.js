@@ -233,6 +233,8 @@ class NanoManager{
 										this.returns_to_hangar = 1;
 									}
 								}
+
+								this.drawLine();
 							}
 						// if there is fuel geather it
 						}else if(this.work_queue == "fuel" && this.data["resources"]["fuel"].length > 0){
@@ -253,6 +255,7 @@ class NanoManager{
 										this.work_queue = "idle";
 									}
 								}
+								this.drawLine();
 							}
 						}
 
@@ -364,6 +367,26 @@ class NanoManager{
 
 					return Math.round(Crafty.math.distance(x,y,x2,y2));
 					//return Math.abs( a + b );
+				},
+
+				drawLine: function(){
+					/*
+					var ctx = Crafty._canvas.context;
+					ctx.save();
+
+					ctx.lineWidth = 2;
+					ctx.strokeStyle = "black";
+
+					ctx.beginPath();
+					ctx.moveTo(this.x, this.y);
+					ctx.lineTo(this.this.place_queue_x, this.y);
+					ctx.lineTo(this.this.place_queue_x - 10, this.y - 10);
+					ctx.moveTo(this.this.place_queue_x, this.y);
+					ctx.lineTo(this.this.place_queue_x - 10, this.y + 10);
+					ctx.stroke();
+
+					ctx.restore();
+					*/
 				}
 		})
 	}
