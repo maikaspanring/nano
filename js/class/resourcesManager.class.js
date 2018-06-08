@@ -7,8 +7,9 @@ class ResourcesManager{
   addResources(typ="fuel"){
     var sq1 = Crafty.e("Resources")
         .place(-1000 + (Math.floor(Math.random() * (1000*2))), -1000 + (Math.floor(Math.random() * (1000*2))))
-        .typ(typ)
-        .color("blue")
+				.color("white")
+				.origin("center")
+				.setResourcesTyp(typ)
   }
 
   initResources(){
@@ -21,15 +22,18 @@ class ResourcesManager{
             this.attach(Crafty.e("2D, Canvas, Text").text("R:"+this.id).textFont({ size: '20px'}));
 		        this.w = 45;
 		        this.h = 45;
-            this.typ;
+						this.z = 1;
+            this.resources_typ="fuel";
         },
 				events: {
 					//"UpdateFrame": "action",
 					//"HitOn": "ping",
 					//"HitOff": "lost"
 				},
-        typ: function(typ){
-          this.typ = typ;
+        setResourcesTyp: function(typ){
+          this.resources_typ = typ;
+					if(typ=="fuel") this.color("#ffe049");
+					if(typ=="carbon") this.color("darkgrey");
           return this;
         },
         place: function(x, y) {
