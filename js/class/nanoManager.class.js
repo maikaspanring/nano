@@ -11,6 +11,7 @@ class NanoManager{
 		var sq1 = Crafty.e("NanobotHangar")
 				.place(window.innerWidth - (Math.floor(Math.random() * window.innerWidth)), window.innerHeight - (Math.floor(Math.random() * window.innerHeight)))
 				.color("yellow")
+				.origin("center")
 		    .setgroup(group)
 	}
 
@@ -18,7 +19,7 @@ class NanoManager{
 		var sq1 = Crafty.e("Nanobot")
 		    .setgroup(group)
 				.place(window.innerWidth - (Math.floor(Math.random() * window.innerWidth)), window.innerHeight - (Math.floor(Math.random() * window.innerHeight)))
-
+				.origin("center")
 		this.nanobots[sq1[0]] = sq1;
 		//if(follow) Crafty.viewport.follow(sq1, 0, 0);
 	}
@@ -54,6 +55,7 @@ class NanoManager{
 
 						//this.text(function () { return this[0] });
 						this.typ = "bot";
+						this.task = this.calcTask(); // calc the life task of this bot
 						this.group = "red";
 
 						this.speed = 0.5;
@@ -87,6 +89,22 @@ class NanoManager{
 						this.data["population"]["count"] = 1;
 						this.data["population"]["timestamp"] = +new Date;
 		    },
+
+				calcTask: function(){
+					var task_arr = [];
+					task_arr[1] = "scout";
+					task_arr[2] = "fuel";
+					task_arr[3] = "carbon";
+					return task_arr[getNumber(
+			      [
+			        //chance, min, max
+			        [.25 ,1 ,1],   // 1: scout 50%
+			        [.50 ,2 ,2],   // 2: fuel 50%
+							[.25 ,3 ,3],   // 2: carbon 50%
+			      ]
+			    )];
+				},
+
 				events: {
 					"UpdateFrame": "action",
 					"HitOn": "ping",
@@ -148,7 +166,7 @@ class NanoManager{
 							this.getNextHangar();
 						}
 					}else{
-						if(from.obj.typ == "fuel"){
+						if(from.obj.resources_typ == "fuel"){
 							//Crafty.log(this.id, "found fuel");
 							this.data["resources"]["fuel"][from.obj.id] = from; // save where this resource is
 							if(this.work_queue == "fuel"){
@@ -177,11 +195,11 @@ class NanoManager{
 						// CALC MISSION ABORT OR LOADING HANGAR
 							if(this.next_hangar !== undefined){
 								if(this.energy - 100 <= this.steps_from_hangar){  // mission aborted
-									this.place_queue_x = this.next_hangar.x;
-									this.place_queue_y = this.next_hangar.y;
+									this.place_queue_x = this.next_hangar.ox;
+									this.place_queue_y = this.next_hangar.oy;
 									this.returns_to_hangar = 1;
 								}
-								if(this.x == this.next_hangar.x && this.y == this.next_hangar.y){
+								if(this.ox == this.next_hangar.ox && this.oy == this.next_hangar.oy){
 									this.place_queue_x=0;
 									this.place_queue_y=0;
 									this.returns_to_hangar = 0;
@@ -198,10 +216,10 @@ class NanoManager{
 								this.returns_to_hangar = 0;
 
 								if(this.next_hangar !== undefined){ // test if mission is do able
-									this.next_hangar_dist = this.getDistance(this.next_hangar.x, this.next_hangar.y, this.place_queue_x, this.place_queue_y )
+									this.next_hangar_dist = this.getDistance(this.next_hangar.ox, this.next_hangar.oy, this.place_queue_x, this.place_queue_y )
 									if(this.energy - (this.next_hangar_dist) <= this.next_hangar_dist){ // mission denied
-										this.place_queue_x = this.next_hangar.x;
-										this.place_queue_y = this.next_hangar.y;
+										this.place_queue_x = this.next_hangar.ox;
+										this.place_queue_y = this.next_hangar.oy;
 										this.returns_to_hangar = 1;
 									}
 								}
@@ -211,38 +229,47 @@ class NanoManager{
 							this.getNextResourcesFuel(); // sets next_job and next_job_dist
 
 							if(this.place_queue_x == 0 && this.place_queue_y == 0){
-								this.place_queue_x =  this.next_job.x;
-								this.place_queue_y =  this.next_job.y;
+								this.place_queue_x =  this.next_job.ox;
+								this.place_queue_y =  this.next_job.oy;
 								this.color(this.group)
 								this.returns_to_hangar = 0;
 
 								if(this.next_hangar !== undefined){ // test if mission is do able
-									this.next_hangar_dist = this.getDistance(this.next_hangar.x, this.next_hangar.y, this.place_queue_x, this.place_queue_y )
+									this.next_hangar_dist = this.getDistance(this.next_hangar.ox, this.next_hangar.oy, this.place_queue_x, this.place_queue_y )
 									if(this.energy - (this.next_hangar_dist) <= this.next_hangar_dist){ // mission denied
-										this.place_queue_x = this.next_hangar.x;
-										this.place_queue_y = this.next_hangar.y;
+										this.place_queue_x = this.next_hangar.ox;
+										this.place_queue_y = this.next_hangar.oy;
 										this.returns_to_hangar = 1;
 										this.work_queue = "idle";
 									}
 								}
 							}
 						}
+
+						// mission abortion extra secure
+						if(this.next_hangar !== undefined){
+							if(this.energy - 100 <= this.steps_from_hangar){  // mission aborted
+								this.place_queue_x = this.next_hangar.ox;
+								this.place_queue_y = this.next_hangar.oy;
+								this.returns_to_hangar = 1;
+							}
+						}
 						// CALC MOVE
 							var move_x = (eventData.dt / this.speed);
 							var move_y = (eventData.dt / this.speed);
 
-							if(this.x < this.place_queue_x && this.x + move_x > this.place_queue_x) move_x = this.place_queue_x - this.x;
-							if(this.x > this.place_queue_x && this.x - move_x < this.place_queue_x) move_x = this.x - this.place_queue_x;
-							if(this.y < this.place_queue_y && this.y + move_y > this.place_queue_y) move_y = this.place_queue_y - this.y;
-							if(this.y < this.place_queue_y && this.y - move_y > this.place_queue_y) move_y = this.y - this.place_queue_y;
+							if(this.ox < this.place_queue_x && this.ox + move_x > this.place_queue_x) move_x = this.place_queue_x - this.ox;
+							if(this.ox > this.place_queue_x && this.ox - move_x < this.place_queue_x) move_x = this.ox - this.place_queue_x;
+							if(this.oy < this.place_queue_y && this.oy + move_y > this.place_queue_y) move_y = this.place_queue_y - this.oy;
+							if(this.oy < this.place_queue_y && this.oy - move_y > this.place_queue_y) move_y = this.oy - this.place_queue_y;
 
-							if(this.x < this.place_queue_x) this.x = this.x + move_x;
-							if(this.x > this.place_queue_x) this.x = this.x - move_x;
-							if(this.y < this.place_queue_y) this.y = this.y + move_y;
-							if(this.y > this.place_queue_y) this.y = this.y - move_y;
+							if(this.ox < this.place_queue_x) this.ox = this.ox + move_x;
+							if(this.ox > this.place_queue_x) this.ox = this.ox - move_x;
+							if(this.oy < this.place_queue_y) this.oy = this.oy + move_y;
+							if(this.oy > this.place_queue_y) this.oy = this.oy - move_y;
 
 						// ARIVED AT PLACE
-							if(this.x == this.place_queue_x && this.y == this.place_queue_y){
+							if(this.ox == this.place_queue_x && this.oy == this.place_queue_y){
 								this.place_queue_x=0;
 								this.place_queue_y=0;
 								//this.work_queue = "idle";
@@ -251,7 +278,7 @@ class NanoManager{
 
 						// CALC ENERGY
 							this.energy-= (move_x + move_y);
-							this.steps_from_hangar+= (move_x + move_y);
+							this.steps_from_hangar+= (move_x + move_y + 1);
 
 						}
 					}else{ // NANOBOT HAVE NO fuel
@@ -284,7 +311,7 @@ class NanoManager{
 					this.next_hangar_dist = 0;
 					for (var i = 0; i < this.data["hangar"].length; i++) {
 						if(this.data["hangar"][i] !== undefined){
-							var ndist = this.getDistance(this.data["hangar"][i].obj.x, this.data["hangar"][i].obj.y)
+							var ndist = this.getDistance(this.data["hangar"][i].obj.ox, this.data["hangar"][i].obj.oy)
 							if(this.next_hangar_dist == 0 || this.next_hangar_dist > ndist){
 								this.next_hangar_dist = ndist;
 								this.next_hangar = this.data["hangar"][i].obj;
@@ -296,7 +323,7 @@ class NanoManager{
 					this.next_job_dist = 0;
 					for (var i = 0; i < this.data["resources"]["fuel"].length; i++) {
 						if(this.data["resources"]["fuel"][i] !== undefined){
-							var ndist = this.getDistance(this.data["resources"]["fuel"][i].obj.x, this.data["resources"]["fuel"][i].obj.y)
+							var ndist = this.getDistance(this.data["resources"]["fuel"][i].obj.ox, this.data["resources"]["fuel"][i].obj.oy)
 							if(this.next_job_dist == 0 || this.next_job_dist > ndist){
 								this.next_job_dist = ndist;
 								this.next_job = this.data["resources"]["fuel"][i].obj;
@@ -304,15 +331,13 @@ class NanoManager{
 						}
 					}
 				},
-				getDistance: function(x, y, x2 = 0, y2 = 0){
-					if( x2 == 0 && y2 == 0){
-						var a = this.x - x;
-						var b = this.y - y;
-					}else{
-						var a = x2 - x;
-						var b = y2 - y;
-					}
-					return Math.abs( a + b );
+				getDistance: function(x, y, x2 = this.ox, y2 = this.oy){
+					//var a = x2 - x;
+					//var b = y2 - y;
+					//Crafty.log( Crafty.math.distance(x,y,x2,y2), this.energy, Math.abs( a + b ))
+
+					return Math.round(Crafty.math.distance(x,y,x2,y2));
+					//return Math.abs( a + b );
 				}
 		})
 	}
@@ -326,6 +351,7 @@ class NanoManager{
 						this.id = this[0];
 		        this.w = 100;
 		        this.h = 100;
+						this.z = -1;
 						this.checkHits('Solid');
 
 						this.typ = "hangar";
@@ -343,7 +369,7 @@ class NanoManager{
 						this.attach(this.energy_visio_text);
 
 						var energy_visio = Crafty.e("2D, Canvas, Color")
-						                     .attr({x: 0, y: 60, w: 0, h: -20})
+						                     .attr({x: -10, y: 60, w: 0, h: -20, z: 10})
 						                     .color("green");
 						this.attach(energy_visio);
 						this.energy_visio = energy_visio;
@@ -400,8 +426,8 @@ class NanoManager{
 					//Crafty.log(eventData);
 					if(this.storage > 0 && this.energy_max - this.energy > 0)
 					{
-						this.storage-= 1;
-						this.energy+=1000;
+						this.storage-= 5;
+						this.energy+=5000;
 						var percent = this.setVisio();
 					}
 				},
@@ -433,6 +459,33 @@ class NanoManager{
 		    }
 		})
 	}
-
+	// great storage
+	initNanobotDepot(){
+		Crafty.c("NanobotDepot", {
+		    // This function will be called when the component is added to an entity
+		    // So it sets up the things that both our entities had in common
+		    init: function() {
+		        this.addComponent("2D, Canvas, Color, Collision, Solid");
+						this.id = this[0];
+		        this.w = 150;
+		        this.h = 150;
+						this.checkHits('Solid');
+				}
+		});
+	}
+	// use carbon to make nanobots (needs fuel)
+	initNanobotFactory(){
+		Crafty.c("NanobotFactory", {
+		    // This function will be called when the component is added to an entity
+		    // So it sets up the things that both our entities had in common
+		    init: function() {
+		        this.addComponent("2D, Canvas, Color, Collision, Solid");
+						this.id = this[0];
+		        this.w = 200;
+		        this.h = 200;
+						this.checkHits('Solid');
+				}
+		});
+	}
 }
 exports.NanoManager = NanoManager

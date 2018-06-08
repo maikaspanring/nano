@@ -41,7 +41,7 @@ $( document ).ready(function() {
   Crafty.bind("MouseWheelScroll", function(evt) {
     Crafty.viewport.scale(Crafty.viewport._scale * (1 + evt.direction * 0.1));
   });
-  Crafty.e('2D, Canvas, Color').attr({x: 0, y: 0, w: window.innerWidth, h: window.innerHeight}).color('#AAA');
+  Crafty.e('2D, Canvas, Color').attr({z: -10, x: 0, y: 0, w: window.innerWidth, h: window.innerHeight}).color('#AAA');
 
   log(NOTE, "--- START ---")
   log(NOTE, "Node: "+process.versions.node )
@@ -53,10 +53,11 @@ $( document ).ready(function() {
   Resources = new ResourcesManager();
   Nano = new NanoManager();
 
-  Resources.addResources();
+  Resources.addResources("fuel");
+  Resources.addResources("carbon"); // to make nanotubes
 
+  //Nano.addNanobotHangar("red");
   Nano.addNanobotHangar("red");
-  Nano.addNanobotHangar("red");
-  for (i = 0; i < 10; i++) Nano.addNanobot("red");
+  for (i = 0; i < 25; i++) Nano.addNanobot("red");
   //for (i = 0; i < 10; i++) Nano.add("green");
 })
