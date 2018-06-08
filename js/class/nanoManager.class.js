@@ -65,7 +65,7 @@ class NanoManager{
 
 						// A nanobot can carry/store the 4 x of its energy
 						this.storage_typ = "";
-						this.storage_max = this.energy_max * 4;
+						this.storage_max = this.energy_max;
 						this.storage = 0;
 
 						this.gameTime;
@@ -154,7 +154,7 @@ class NanoManager{
 							if(this.work_queue == "fuel"){
 								this.storage_typ = "fuel";
 								if(this.storage < this.storage_max){ // is ther still storage aviable
-									this.storage++;
+									this.storage+=10;
 									this.wait_time = this.gameTime + (500 * this.speed);
 									Crafty.log(this.id, " getherd", this.storage);
 									this.resetHitChecks('Solid'); // geather more
@@ -336,7 +336,7 @@ class NanoManager{
 
 						// the hangar processes fuel to energy!
 						this.storage_typ = "fuel";
-						this.storage_max = this.energy_max * 4;
+						this.storage_max = 1000;
 						this.storage = 0;
 
 						this.energy_visio_text = Crafty.e("2D, Canvas, Text").text(this.energy).textFont({ size: '18px'});
@@ -368,7 +368,7 @@ class NanoManager{
 							this.energy-= this.energy;
 						}
 
-						if(from[i].obj.storage_typ == "fuel" && from[i].obj.storage > 0){
+						if(from[i].obj.storage_typ == "fuel" && from[i].obj.storage > 0 && (this.storage_max - this.storage - from[i].obj.storage) > 0){
 							this.storage+= from[i].obj.storage;
 							from[i].obj.storage = 0;
 						}
@@ -398,7 +398,7 @@ class NanoManager{
 				// do something every frame
 				action: function(eventData){
 					//Crafty.log(eventData);
-					if(this.storage > 0)
+					if(this.storage > 0 && this.energy_max - this.energy > 0)
 					{
 						this.storage-= 1;
 						this.energy+=1000;
