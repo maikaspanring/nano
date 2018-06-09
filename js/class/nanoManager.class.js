@@ -3,6 +3,7 @@ class NanoManager{
 		this.nanobots = [];
 
 		// init component
+		this.initLine();
 		this.initNanobotHangar();
 		this.initNanobot();
 	}
@@ -92,6 +93,8 @@ class NanoManager{
 						this.flash = 0;
 
 						this.calcGroup();
+
+						this.path = Crafty.e("Line").attr({x: this.x, y: this.y});
 						Crafty.log(this.id, "Nanobot created task:", this.task);
 		    },
 
@@ -237,8 +240,6 @@ class NanoManager{
 										this.returns_to_hangar = 1;
 									}
 								}
-
-								this.drawLine();
 							}
 						// if there is fuel geather it
 						}else if(this.work_queue == "fuel" && this.data["resources"]["fuel"].length > 0){
@@ -259,7 +260,6 @@ class NanoManager{
 										this.work_queue = "idle";
 									}
 								}
-								this.drawLine();
 							}
 						}
 
@@ -272,6 +272,8 @@ class NanoManager{
 								this.work_queue = "idle";
 							}
 						}
+						this.drawLine();
+
 						// CALC MOVE
 							var move_x = (eventData.dt / this.speed);
 							var move_y = (eventData.dt / this.speed);
@@ -308,6 +310,7 @@ class NanoManager{
 					var percent = this.energy * 100 / this.energy_max;
 					var nwidth = percent*this.w / 100;
 					this.energy_visio.w = nwidth;
+
 				},
 
 		    remove: function() {
@@ -383,23 +386,7 @@ class NanoManager{
 				},
 
 				drawLine: function(){
-					/*
-					var ctx = Crafty._canvas.context;
-					ctx.save();
 
-					ctx.lineWidth = 2;
-					ctx.strokeStyle = "black";
-
-					ctx.beginPath();
-					ctx.moveTo(this.x, this.y);
-					ctx.lineTo(this.this.place_queue_x, this.y);
-					ctx.lineTo(this.this.place_queue_x - 10, this.y - 10);
-					ctx.moveTo(this.this.place_queue_x, this.y);
-					ctx.lineTo(this.this.place_queue_x - 10, this.y + 10);
-					ctx.stroke();
-
-					ctx.restore();
-					*/
 				}
 		})
 	}
@@ -557,6 +544,26 @@ class NanoManager{
 		        this.h = 200;
 						this.checkHits('Solid');
 				}
+		});
+	}
+
+	initLine(){
+		Crafty.c("Line", {
+		    init: function () {
+		        this.requires("2D, Canvas");
+		        this.bind("Draw", this._draw_me);
+		        this.ready = true;
+		    },
+		    _draw_me: function (e) {
+		        var ctx = e.ctx;
+		        ctx.lineWidth = 2;
+		        ctx.strokeStyle = "green";
+		        ctx.beginPath();
+						Crafty.log(this.x, this.y)
+		        ctx.moveTo(this.x, this.y);
+		        ctx.lineTo(this.x + 500, this.y + 700);
+		        ctx.stroke();
+		    }
 		});
 	}
 }
