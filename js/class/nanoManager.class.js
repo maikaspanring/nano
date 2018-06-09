@@ -100,12 +100,14 @@ class NanoManager{
 					task_arr[1] = "scout";
 					task_arr[2] = "fuel";
 					task_arr[3] = "carbon";
+					task_arr[4] = "builder";
 					return task_arr[getNumber(
 			      [
 			        //chance, min, max
-			        [.50 ,1 ,1],   // 1: scout 50%
+			        [.25 ,1 ,1],   // 1: scout 50%
 			        [.25 ,2 ,2],   // 2: fuel 50%
 							[.25 ,3 ,3],   // 2: carbon 50%
+							[.25 ,4 ,4],   // 2: carbon 50%
 			      ]
 			    )];
 				},
@@ -209,6 +211,7 @@ class NanoManager{
 									this.place_queue_x = this.next_hangar.ox;
 									this.place_queue_y = this.next_hangar.oy;
 									this.returns_to_hangar = 1;
+									this.work_queue = "idle";
 								}
 								if(this.ox == this.next_hangar.ox && this.oy == this.next_hangar.oy){
 									this.place_queue_x=0;
@@ -266,6 +269,7 @@ class NanoManager{
 								this.place_queue_x = this.next_hangar.ox;
 								this.place_queue_y = this.next_hangar.oy;
 								this.returns_to_hangar = 1;
+								this.work_queue = "idle";
 							}
 						}
 						// CALC MOVE
@@ -328,6 +332,14 @@ class NanoManager{
 							this.speed = 0.5;
 							break;
 						case "carbon": this.group = "lightblue"; break;
+						case "builder":
+							this.group = "#ff00cb";
+							this.w = this.w * 1.5;
+							this.h = this.h * 1.5;
+							this.speed = 2;
+							this.energy_max = this.energy_max * 5;
+							this.storage_max = this.energy_max;
+						break;
 						default: this.group = "silver"; break;
 					}
 				},
@@ -408,12 +420,12 @@ class NanoManager{
 						this.team = 1;
 						this.group = "red";
 
-						this.energy_max = 1000000; // 10 000 000
-						this.energy = 1000000; // 10 000 000
+						this.energy_max = 10000000; // 10 000 000
+						this.energy = 10000000; // 10 000 000
 
 						// the hangar processes fuel to energy!
 						this.storage_typ = "fuel";
-						this.storage_max = 1000;
+						this.storage_max = this.energy_max / 2;
 						this.storage = 0;
 
 						var energy_visio = Crafty.e("2D, Canvas, Color")
@@ -446,9 +458,11 @@ class NanoManager{
 							this.energy-= this.energy;
 						}
 
+						//Crafty.log(from[i].obj.storage_typ, from[i].obj.storage, (this.storage_max - this.storage - from[i].obj.storage) )
 						if(from[i].obj.storage_typ == "fuel" && from[i].obj.storage > 0 && (this.storage_max - this.storage - from[i].obj.storage) > 0){
 							this.storage+= from[i].obj.storage;
 							from[i].obj.storage = 0;
+							//Crafty.log(this.storage);
 						}
 
 						var percent = this.setVisio();
@@ -481,7 +495,7 @@ class NanoManager{
 					//Crafty.log(eventData);
 					if(this.storage > 0 && this.energy_max - this.energy > 0)
 					{
-						this.storage-= 5;
+						this.storage-= 50;
 						this.energy+=5000;
 						var percent = this.setVisio();
 					}
